@@ -14,32 +14,40 @@ import {nanoid} from "nanoid"
  */
 
 export default function App() {
-    const [notes, setNotes] = React.useState([])
+    const [notes, setNotes] = React.useState(() => { return JSON.parse(localStorage.getItem("notes")) || [] })
     const [currentNoteId, setCurrentNoteId] = React.useState(
         (notes[0] && notes[0].id) || ""
     )
+
+    React.useEffect(() => {
+        localStorage.setItem("notes", JSON.stringify(notes));
+    }, [notes]);
+
+   function findCurrentNote() {
+        return notes.find(note => {
+            return note.id === currentNoteId
+        }) || notes[0]
+    }
     
     function createNewNote() {
         const newNote = {
             id: nanoid(),
             body: "# Type your markdown note's title here"
         }
-        setNotes(prevNotes => [newNote, ...prevNotes])
+        setNotes(prevNotes => [newNote, ...prevNotes]);
         setCurrentNoteId(newNote.id)
     }
     
     function updateNote(text) {
-        setNotes(oldNotes => oldNotes.map(oldNote => {
-            return oldNote.id === currentNoteId
-                ? { ...oldNote, body: text }
-                : oldNote
-        }))
-    }
-    
-    function findCurrentNote() {
-        return notes.find(note => {
-            return note.id === currentNoteId
-        }) || notes[0]
+        setNotes(oldNotes => {
+            const newNotes = [];
+            for (let x = 0; x < oldNotes.length; x++) {
+                oldNotes[x].id === currentNoteId
+                ? newNotes.unshift({...oldNotes[x], body: text})
+                : newNotes.push(oldNotes[x])
+            }
+            return newNotes;
+        })
     }
     
     return (
